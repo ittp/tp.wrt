@@ -28,7 +28,27 @@ jobs:
       # Runs a single command using the runners shell
       - name: Sync
         run: echo "send command to router"
-
+      - name: SSH and SCP Setup
+        # You may pin to the exact commit or the version.
+        # uses: alinz/ssh-scp-action@97ad76feb6460d3392b63f11ac354568c89b8968
+        uses: alinz/ssh-scp-action@v0.1.2
+        with:
+          # ssh remote host
+          host: avt.ittps.ru # optional
+          # ssh remote port
+          port: # optional, default is 22
+          # ssh user
+          user: root # optional
+          # content of ssh private key. ex raw content of ~/.ssh/id_rsa
+          key: ${{secrets.PRIVATE_KEY}} # optional
+          # execute commands before SCP
+          ssh_before: # optional
+          # scp local and remote
+          scp: 
+          # optional
+          # execute commands after SCP
+          ssh_after: echo 1
+          # optional
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
@@ -39,15 +59,40 @@ jobs:
         uses: a-was/scp-files-action@v1
         with:
           # Remote host
-          host: ${ github.secrets.host }
+          host: avt.ittps.ru #${ github.secrets.host }
           # Remote host SSH port
-          port: ${ github.secrets.port }
+          port: 2222 ${ github.secrets.port }
           # Remote host user
-          user: ${ github.secrets.user }
+          user: root ${ github.secrets.user }
           # SSH private key
           key: ${ github.secrets.key }
           # Repo directory path. Default whole repo
-          source: ${ github.secrets.source } # default is $(pwd)/
+          source: $(pwd)/avt/ # ${ github.secrets.source } # default is $(pwd)/
           # Remote directory path. Default home directory
-          destination: ${ github.secrets.destination } # default is ~/
+          destination: /tmp/avt/ ${ github.secrets.destination } # default is ~/
+    - name: Operations
+      uses: alinz/ssh-scp-action@master
+      env:
+        HELLO: cool
+        MESSAGE: hello world
+      with:
+        key: ${{ secrets.SSH_KEY }}
+        host: hub.ittps.ru
+        port: 22580
+        user: root
+        # runs this on remove server
+        ssh_before: |
+          echo $HELLO
+          echo $MESSAGE
+          ls -lath
 
+        # then uploads these 2 files
+        scp: |
+          sample1.txt john@example.com:~/sample1.dat
+          sample2.txt john@example.com:~/sample2.dat
+
+        # then run these commands
+        ssh_after: |
+          echo $HELLO
+          echo $MESSAGE
+          ls -lath
