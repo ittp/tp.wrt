@@ -1,1 +1,7 @@
-
+uci set network.wan.proto='pppoe'
+uci set network.wan.username='${{secrets.ppoe_username}}'
+uci set network.wan.password='${{secrets.ppoe_password}}'
+uci set network.wan.ipv6='auto'
+uci add_list dhcp.wan.ra_flags='none'
+uci commit
+/etc/init.d/network restart
