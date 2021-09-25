@@ -1,98 +1,24 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the workflow will run
+name: npm
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+ workflow_dispatch
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [14]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Sync
-        run: echo "send command to router"
-      - name: SSH and SCP Setup
-        # You may pin to the exact commit or the version.
-        # uses: alinz/ssh-scp-action@97ad76feb6460d3392b63f11ac354568c89b8968
-        uses: alinz/ssh-scp-action@v0.1.2
-        with:
-          # ssh remote host
-          host: avt.ittps.ru # optional
-          # ssh remote port
-          port: # optional, default is 22
-          # ssh user
-          user: root # optional
-          # content of ssh private key. ex raw content of ~/.ssh/id_rsa
-          key: ${{secrets.PRIVATE_KEY}} # optional
-          # execute commands before SCP
-          ssh_before: # optional
-          # scp local and remote
-          scp: 
-          # optional
-          # execute commands after SCP
-          ssh_after: echo 1
-          # optional
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
-          
-      - name: SCP Files Action
-        uses: a-was/scp-files-action@v1
-        with:
-          # Remote host
-          host: avt.ittps.ru #${ github.secrets.host }
-          # Remote host SSH port
-          port: 2222 ${ github.secrets.port }
-          # Remote host user
-          user: root ${ github.secrets.user }
-          # SSH private key
-          key: ${ github.secrets.key }
-          # Repo directory path. Default whole repo
-          source: $(pwd)/avt/ # ${ github.secrets.source } # default is $(pwd)/
-          # Remote directory path. Default home directory
-          destination: /tmp/avt/ ${ github.secrets.destination } # default is ~/
-    - name: Operations
-      uses: alinz/ssh-scp-action@master
-      env:
-        HELLO: cool
-        MESSAGE: hello world
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
       with:
-        key: ${{ secrets.SSH_KEY }}
-        host: hub.ittps.ru
-        port: 22580
-        user: root
-        # runs this on remove server
-        ssh_before: |
-          echo $HELLO
-          echo $MESSAGE
-          ls -lath
+        node-version: ${{ matrix.node_version }}
 
-        # then uploads these 2 files
-        scp: |
-          sample1.txt john@example.com:~/sample1.dat
-          sample2.txt john@example.com:~/sample2.dat
-
-        # then run these commands
-        ssh_after: |
-          echo $HELLO
-          echo $MESSAGE
-          ls -lath
+    - name: npm install, build and test
+      run: |
+        npm install
+        npm run build --if-present
+        npm test
